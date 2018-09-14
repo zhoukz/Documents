@@ -1,0 +1,9 @@
+tar -jxvf pdsh-2.26.tar.bz2
+
+cd pdsh-2.26
+
+./configure --with-ssh --without-rsh
+
+ make && make install
+
+pdsh -V 检查会发现有版本

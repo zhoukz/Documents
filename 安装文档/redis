@@ -1,0 +1,92 @@
+设置环境变量：
+vi .bash_profile
+export REDIS_HOME=/opt/freeware/redis-2.8.13
+export PATH=$PATH:$REDIS_HOME/bin:$MONGO_HOME/bin:/usr/local/bin:/usr/local/sbin
+
+从C:\Users\huang\OneDrive\AI\pkg-conf\redis-tst1m.tar上传配置文件并解压：
+tar -xvf redis-tst1m.tar
+修改启动脚本：
+vi redis-tst1m/bin/start_rds1m.sh?
+redis-server $HOME/redis-tst1m/conf/redis-tst1m.conf --port 16379
+更新端口
+
+
+主从配置：
+主:132.37.6.111 （master）
+从:132.37.6.113 （slave）
+控:132.37.6.119/121/123（sentinel）
+
+创建slaveof启动配置
+cd  redis-tst1m/bin
+cp start_rds1m.sh start_rds1m_slaveof.sh
+vi start_rds1m_slaveof.sh
+redis-server $HOME/redis-tst1m/conf/redis-tst1m.conf slaveof 132.37.6.111 16379 --port 16379
+
+创建sentinel配置
+cd redis-tst1m/conf
+vi sentinel.conf
+###
+port 26379
+sentinel monitor mymaster 132.37.6.111 16379 1
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+###
+
+创建sentinel启动脚本
+cd  redis-tst1m/bin
+vi start_sentinel.sh
+
+###
+#!/bin/bash
+redis-server $HOME/redis-weg1m/conf/sentinel.conf --sentinel &> $HOME/redis-weg1m/logs/sentinel.log &
+###
+
+把配置文件和应用程序同步到sentinel主机并配置环境变量
+pdcp …(略)
+
+
+登录sentinel主机，启动sentinel
+cd redis-tst1m/bin;./start_sentinel.sh
+
+登录master主机，启动master
+cd  redis-tst1m/bin;./start_rds1m.sh
+
+登录slave主机，启动slave
+cd  redis-tst1m/bin;./start_rds1m_slaveof.sh
+
+查看状态：
+master:    redis-cli.sh -h 132.37.6.111 -p 16379 INFO
+slave:  redis-cli.sh -h 132.37.6.113 -p 16379 INFO
+sentinel:  redis-cli.sh -h 132.37.6.119 -p 26379 INFO
+
+
+验证：
+登录master
+redis-cli -h 132.37.6.111 -p 16379
+set kk 00
+exit
+
+shutdown master
+redis-cli -h 132.37.6.111 -p 16379 shutdown
+
+查看现有redis
+redis-cli -h 132.37.6.113 -p 16379 INFO
+redis-cli -h 132.37.6.119 -p 26379 INFO
+
+发现113自动接管master
+
+登录master113
+redis-cli -h 132.37.6.113 -p 16379
+get kk
+exit
+发现原master上定义的参数可以读取并可修改
+
+注：后续启动111和113时，都必须使用start_rds1m.sh，无须再使用start_rds1m_slaveof.sh。
+
+
+但是还有一个警告：
+WARNING overcommit_memory is set to 0! Background save may fail under low memory condition.
+To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+
+警告：过量使用内存设置为0！在低内存环境下，后台保存可能失败。为了修正这个问题，请在/etc/sysctl.conf 添加一项 'vm.overcommit_memory = 1' ，然后重启（或者运行命令'sysctl vm.overcommit_memory=1' ）使其生效

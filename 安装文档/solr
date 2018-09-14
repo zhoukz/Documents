@@ -1,0 +1,65 @@
+前提：
+
+安装好tomcat。
+
+
+
+操作：
+
+从C:\Users\huang\OneDrive\AI\pkg-inst\solr-4.9.0.tgz上传并解压solr 4.9.0到/opt/freeware
+
+
+
+(1). 部署Solr
+
+a. 将/usr/solr-4.9.0/dist目录下的solr-4.9.0.war拷贝到/usr/apache-tomcat-7.0.42/webapps/下并改成solr.war，启动tomcat解压“solr.war”；
+
+b. 在/usr/apache-tomcat-7.0.42/webapps/solr/下新建文件夹solr_home；
+
+c. 把solr解压目录中的"example/solr/"目录下的所有内容复制到solr_home中。
+
+
+
+(2). 配置solr_home(推荐方法1)
+
+方法1：修改/usr/apache-tomcat-7.0.42/webapps/solr/WEB-INF/web.xml,，取消注释，配置“env-entry-value”的值为
+
+<env-entry>
+
+<env-entry-name>solr/home</env-entry-name>
+
+<env-entry-value>/usr/solr</env-entry-value>
+
+<env-entry-type>java.lang.String</env-entry-type>
+
+</env-entry>
+
+ 
+
+注：<env-entry-value>/usr/solr</env-entry-value>  里面的值为solr_home的路径：例如：E:\tomcat\apache-tomcat-7.0.55\webapps\solr\solr_home
+
+
+
+方法2：在/usr/apache-tomcat-7.0.42/conf/Catalina/localhost下添加solr.xml,内容如下：
+
+<?xml version="1.0" encoding="utf-8"?>
+
+<Context docBase="/usr/apache-tomcat-7.0.42/webapps/solr.war" debug="0" crossContext="true">
+
+<Environment name="solr/home" type="java.lang.String" value= "/usr/apache-tomcat-7.0.42/webapps/solr/solr_home" override="true"/>
+
+</Context>
+
+
+
+(3).配置日志
+
+将 solr目录下example/lib/ext中的jar包copy到tomcat的 solr/WEB-INF/lib下。这时候虽然添加jar包，但是没有对应的日志配置，需要将example/resources/下的 log4j.properties也放到solr/WEB-INF/classes/下。（classes要新建目录）（这步非常关 键，solr4.9.0的war包中不包含任何日志的 jar包，需要自己手动添加）
+
+
+
+(4). 重新关闭在开启tomcat；
+
+
+
+(5).浏览器打开 http://localhost:8080/solr  验证是否安装成功

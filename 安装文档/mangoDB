@@ -1,0 +1,156 @@
+#使用dubbo用户
+
+从C:\Users\huang\OneDrive\AI\pkg-conf\mongodb20150426.tar上传压缩包并解压。
+
+#修改配置文件
+
+cd /uniapp/users/tsthtdoub01/mongodb/etc
+
+vi mongod-rs0s.conf
+
+改路径和端口号
+
+
+#启动
+
+mongod -f /uniapp/users/tsthtdoub01/mongodb/etc/mongod-rs0s.conf
+
+或
+
+/uniapp/users/tsthtdoub01/mongodb/bin/start_mongod.sh
+
+
+mongo主备复制
+
+准备两台主机:
+
+10.202.41.100 WOPAY-DEVTEST-01  主
+
+10.202.41.101 WOPAY-DEVTEST-02   备和仲裁
+
+1,安装
+先在10.202.41.100 安装
+
+新建mkdir –p /opt/freeware/ 目录
+解压
+[root@WOPAY-DEVTEST-01 ~]# cd /opt/freeware/
+[root@WOPAY-DEVTEST-01 freeware]# tar -zxvf mongodb-linux-x86_64-2.6.0.tgz
+
+切换成安装目录:
+添加环境变量:
+[wohuafu@WOPAY-DEVTEST-01 ~]$ vi .bash_profile
+export MONGO_HOME=/opt/freeware/mongodb-linux-x86_64-2.6.0
+export PATH=$PATH:$MONGO_HOME/bin:/usr/local/bin:/usr/local/sbin
+
+[wohuafu@WOPAY-DEVTEST-01~]$mkdir	-p mongodb/{bin,configdb,dbdata,etc,export,logs,pid}
+
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd mongodb/etc/
+[wohuafu@WOPAY-DEVTEST-01 etc]$ vi mongod-rs0s.conf (新vi 一个文件 根据主机的信息修改成以下参数)
+dbpath=/home/wohuafu/mongodb/dbdata/rs0(这个rs0 目录要新建)
+logpath=/home/wohuafu/mongodb/logs/mongodbrs0.log
+pidfilepath=/home/wohuafu/mongodb/pid/mongodbrs0.pid
+directoryperdb=true
+logappend=true
+replSet=rs0
+#bind_ip=pkgmgdweg3
+bind_ip=10.202.41.100
+port=27011
+oplogSize=1024
+fork=true
+#noprealloc=true
+#auth=true
+#keyFile=/uniiof/users/mgousr01/mongodb/etc/keyFile/keyFilers0
+
+
+2,设置启动脚本:
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd mongodb/bin
+[wohuafu@WOPAY-DEVTEST-01 bin]$ vi start_mongod.sh
+ mongod -f /home/wohuafu/mongodb/etc/mongod-rs0s.conf
+保存退出 记得授权改成755
+[wohuafu@WOPAY-DEVTEST-01 bin]$ chmod 755 start_mongod.sh
+
+3,启动
+[wohuafu@WOPAY-DEVTEST-01 bin]$ ./start_mongod.sh
+
+4,查看到以下进程说明安装成功
+[wohuafu@WOPAY-DEVTEST-01bin]$ ps -ef |grep mongodb
+wohuafu  17242 17168  0 18:41 pts/1    00:00:00 grep mongodb
+wohuafu  62502     1  0 13:50 ?        00:01:15 mongod -f /home/wohuafu/mongodb/etc/mongod-rs0s.conf
+
+
+如有报错可以查看日志
+Tail -200f  /home/wohuafu/mongodb/logs/mongodbrs0.log
+
+
+另一台安装
+10.202.41.101 WOPAY-DEVTEST-02   备和仲裁
+
+安装方法同上:因为101 要起两个mongodb进程 所以etc 目录要有两个配置文件,只需要不同的端口号,不同的data,log,pid 就可以了
+[wohuafu@WOPAY-DEVTEST-02 etc]$ ll
+total 8
+-rwxr-x---. 1 wohuafu wohuafu 359 Apr 27 13:39 mongod-rs0s.conf
+-rwxr-x---. 1 wohuafu wohuafu 339 Apr 27 13:46 mongod-rs1s.conf
+
+
+
+
+
+新建两个启动文件:
+[wohuafu@WOPAY-DEVTEST-02 ~]$ cd mongodb/bin
+[wohuafu@WOPAY-DEVTEST-02 bin]$ vi start_mongod.sh
+
+mongod -f /home/wohuafu/mongodb/etc/mongod-rs0s.conf
+
+[wohuafu@WOPAY-DEVTEST-02 bin]$ vi start_mongod-rs1s.sh
+
+mongod -f /home/wohuafu/mongodb/etc/mongod-rs1s.conf
+~
+
+保存授权755
+
+查看会有两个进程
+[wohuafu@WOPAY-DEVTEST-02 bin]$ ps -ef |grep mongodb
+wohuafu  17242 17168  0 18:41 pts/1    00:00:00 grep mongodb
+wohuafu  62502     1  0 13:50 ?        00:01:15 mongod -f /home/wohuafu/mongodb/etc/mongod-rs0s.conf
+wohuafu  62552     1  0 13:50 ?        00:01:13 mongod -f /home/wohuafu/mongodb/etc/mongod-rs1s.conf
+
+
+5,设置主,备仲裁.
+在100上登录mongodb
+
+[wohuafu@WOPAY-DEVTEST-01 ~]$ mongo 10.202.41.100:27011
+>use admin
+>cfg={_id:"rs0",members:[ {_id:0,host:'10.202.41.100:27011',priority:2},{_id:1,host:'10.202.41.101:27011',priority:1},{_id:2,host:'10.202.41.101:27012',arbiterOnly:true}] };
+>rs.initiate(cfg) #使配置生效
+
+安装成功会显示OK !
+
+执行rs.initiate(cfg) 遇到的问题:
+"errmsg" : "couldn't initiate : need all members up to initiate, not ok : 10.202.41.101:27011"
+
+防火墙开着了  关掉即可
+service iptables stop
+
+
+测试安装成功与否:
+在10..202.41.100上执行
+[wohuafu@WOPAY-DEVTEST-01 ~]$ mongo 10.202.41.100:27011
+rs0:PRIMARY> show dbs
+rs0:PRIMARY> use test
+rs0:PRIMARY> db.testdb.insert({"test1":"testval1"})
+rs0:PRIMARY> db.testdb.find();  可以查到
+
+
+10.202.41.101 当100主机没有宕的时候是不能切过备机的
+rs0:SECONDARY> db.testdb.find();
+error: { "$err" : "not master and slaveOk=false", "code" : 13435 }
+
+到100主机杀掉后再查
+rs0:SECONDARY> show dbs
+rs0:PRIMARY> db.testdb.find();
+{ "_id" : ObjectId("553caf248006849b7a735ca7"), "test1" : "testval1" }  数据可查
+
+说明主备切换成功!
+
+
+mgousr01@gxuweg3doc02:/uniiof/users/mgousr01/bin>mongod -shutdown --dbpath /uniiof/users/mgousr01/mongodb/dbdata/rs1

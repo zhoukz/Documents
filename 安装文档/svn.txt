@@ -1,0 +1,82 @@
+在132.37.5.193上svnccgx1用户下,132.37.5.194也有一套,起来直接就能用了,密码我单独发给中章和家宇，进去后进入repository目录，其中authfile文件是用户名和密码文件，authz.conf为代码库权限文件。
+人员的用户名规定必须是公司的nt账号，然后看authfile文件里是否已经建立过，如果新增就用命令：htpasswd -b authfile nt-username password 添加用户（重置已有用户密码也是这么写）
+所有帐号都有要人审批才给创建,沃易购是亚飞,沃创富邱鸿乐,让他们说明要访问的路径和权限.
+如下面邮件的用户：
+ htpasswd -b authfile zhaozw6 CnUfB886i6xM
+添加完用户后，在authz.conf里把用户加入对应的组中就可以了。
+DEV开头的是开发人员的，TST开头的是测试人员的，APP开头的是维护人员的。
+Svn主用户svnroot，进入bin里apachectl  start|stop|restart为启停重起svn服务
+[svnccgx1@gxuweg3tst09 bin]$ pwd
+/home/svnccgx1/bin
+[svnccgx1@gxuweg3tst09 bin]$ ./apachectl stop
+[svnccgx1@gxuweg3tst1 bin]$ ./apachectl start
+###20140919 基于广西沃易购新建沃创富svn代码库
+DEV_GXUWCF = qiuhl,panlz,mailt
+TST_GXUWCF =
+APP_GXUWCF =
+ 
+svnadmin create /home/svnccgx1/repository/GXUWCF
+ 
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Trunk    -m "Trunk"
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Branch   -m "Branch"
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Tags     -m "Tags"
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Release  -m "Release"
+ 
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Trunk/GXUWCF_DEV     -m "GXUWCF Platform"
+svn mkdir http://133.0.192.193:18031/svn/GXUWCF/Branch/GXUWCF_DEV     -m "GXUWCF Platform"
+ 
+[GXUWCF:/]
+@svnadm = rw
+@DEV_GXUWCF = r
+@TST_GXUWCF = r
+@Infra = r
+ 
+[GXUWCF:/Trunk]
+@svnadm = rw
+@DEV_GXUWCF = r
+@TST_GXUWCF = r
+@Infra = r
+ 
+[GXUWCF:/Branch]
+@svnadm = rw
+@DEV_GXUWCF = r
+@TST_GXUWCF = r
+@Infra = r
+ 
+[GXUWCF:/Tags]
+@svnadm = rw
+@DEV_GXUWCF = rw
+@TST_GXUWCF = rw
+@Infra = rw
+ 
+[GXUWCF:/Release]
+@svnadm = rw
+@DEV_GXUWCF = r
+@TST_GXUWCF = rw
+@Infra = rw
+ 
+[GXUWCF:/Trunk/GXUWCF_DEV]
+@svnadm = rw
+@DEV_GXUWCF = rw
+@TST_GXUWCF = r
+@Infra = r
+ 
+[GXUWCF:/Branch/GXUWCF_DEV]
+@svnadm = rw
+@DEV_GXUWCF = rw
+@TST_GXUWCF = r
+@Infra = r
+ #########################################################
+新建目录和组:
+创建一个HZEC 目录
+[svnccgx1@gxuweg3tst1 repository]$ svnadmin create /home/svnccgx1/repository/HZEC
+[svnccgx1@gxuweg3tst1 repository]$ vi authz.conf 添加一个GXU_HZEC组和限制人员
+GXU_HZEC   =qiuhl,yubo5,zhaoyf7,zouyi,yugn,chenby
+[GXU_HZEC:/]
+@svnadm = rw
+@GXU_HZEC =rw
+@TST_GXUWCF =
+@Infra = 
+
+在HZEC 下新建Trunk目录
+[svnccgx1@gxuweg3tst1 repository]$ svn mkdir http://132.37.5.193:18031/svn/HZEC/Trunk    -m "Trunk" 

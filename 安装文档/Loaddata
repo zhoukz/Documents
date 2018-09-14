@@ -1,0 +1,6 @@
+数据导入程序:~/wa/loaddata/target/loaddata_zippack.zip
+需要配置conf/Context.properties的conn.file.dir目录指向conn目录
+bin/start.sh 中的JAVA_HOME变量
+bin/addcron.sh是添加定时任务的
+在执行导入程序前，需要在hbase建好表，建表脚本在loaddata代码工程的db目录里
+导入程序的hbase和redis地址也是在conf/Context.properties中配置的 

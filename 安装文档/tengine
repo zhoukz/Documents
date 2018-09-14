@@ -1,0 +1,87 @@
+132.37.5.196
+1,安装pcre
+cd pcre-8.35
+[tgnusr01@gxuweg3web11 ~]$ cd pcre-8.35/
+[tgnusr01@gxuweg3web11 pcre-8.35]$ ./configure --prefix=/uniiof/users/tgnusr01/pcre
+[tgnusr01@gxuweg3web11 pcre-8.35]$ make && make install
+2,安装lua
+[uatwjrtgn01@gxuweg3tst04 ~]$ cd LuaJIT-2.0.3/
+[uatwjrtgn01@gxuweg3tst04 LuaJIT-2.0.3]$ vi Makefile 
+LDCONFIG= ldconfig -n 改为
+LDCONFIG= /sbin/ldconfig -n
+
+
+
+[uatwjrtgn01@gxuweg3tst04 LuaJIT-2.0.3]$ make install PREFIX=/uniiof/users/uatwjrtgn01/LuaJIT
+[uatwjrtgn01@gxuweg3tst04 LuaJIT-2.0.3]$ export LUAJIT_LIB=/uniiof/users/uatwjrtgn01/LuaJIT/lib
+[uatwjrtgn01@gxuweg3tst04 LuaJIT-2.0.3]$ export LUAJIT_INC=/uniiof/users/uatwjrtgn01/LuaJIT/include/luajit-2.0
+
+
+3,安装tengine
+[uatwjrtgn01@gxuweg3tst04 tengine-2.0.3]$ cd tengine-2.0.3/
+[uatwjrtgn01@gxuweg3tst04 tengine-2.0.3]$ ./configure --prefix=/uniiof/users/uatwjrtgn01/tengine --with-http_lua_module --with-luajit-inc=/uniiof/users/uatwjrtgn01/LuaJIT/include/luajit-2.0  --with-luajit-lib=/uniiof/users/uatwjrtgn01/LuaJIT/lib --with-pcre=/uniiof/users/uatwjrtgn01/pcre-8.35
+
+yum install openssl-devel
+
+
+[uatwjrtgn01@gxuweg3tst04 tengine-2.0.3]$ make
+[uatwjrtgn01@gxuweg3tst04 tengine-2.0.3]$ make install
+
+[uatwjrtgn01@gxuweg3tst04 tengine]$ cd sbin
+[uatwjrtgn01@gxuweg3tst04 sbin]$ pwd
+/uniiof/users/uatwjrtgn01/tengine/sbin
+[uatwjrtgn01@gxuweg3tst04 sbin]$ llo
+total 8356
+-rwxr-xr-x 1 uatwjrtgn01 uatwjr   20745 Feb  5 10:36 dso_tool
+-rwxr-x--- 1 uatwjrtgn01 uatwjr 8530439 Feb  5 10:36 nginx
+[uatwjrtgn01@gxuweg3tst04 sbin]$ ldd nginx (看看有没有not found)
+
+[tsttgn01@gxuweg3tst05 sbin]$ ldd nginx
+      libluajit-5.1.so.2 => not found
+
+
+ libluajit-5.1.so.2 这个文件在哪 然后root 执行下面的
+echo "/uniiof/users/cpstgn01/LuaJIT/lib" > /etc/ld.so.conf.d/usr_local_lib.conf
+ldconfig
+
+
+修改端口:
+[uatwjrtgn01@gxuweg3tst04 conf]$ pwd
+/uniiof/users/uatwjrtgn01/tengine/conf
+[uatwjrtgn01@gxuweg3tst04 conf]$ vi nginx.conf
+
+启动查看:
+-rwxr-x--- 1 uatwjrtgn01 uatwjr 8530439 Feb  5 10:36 nginx
+[uatwjrtgn01@gxuweg3tst04 sbin]$ ./nginx -s start
+[uatwjrtgn01@gxuweg3tst04 sbin]$ ps -ef|grep nginx
+567      124666      1  0 10:39 ?        00:00:00 nginx: master process ./nginx -s start
+567      124667 124666  0 10:39 ?        00:00:00 nginx: worker process
+
+http://132.37.5.196:19300/  看到welcome 安装成功
+
+安装varnish 
+[uatwjrtgn01@gxuweg3tst04 ~]$ cd varnish-3.0.5/
+[uatwjrtgn01@gxuweg3tst04 varnish-3.0.5]$ sh autogen.sh 
+[tgnusr01@gxuweg3web11 varnish-3.0.5]$ ./configure --prefix=/uniiof/users/tgnusr01/varnish
+[tgnusr01@gxuweg3web11 varnish-3.0.5]$
+export PKG_CONFIG_PATH=/uniiof/users/tgnusr01/pcre/lib/pkgconfig/
+[uatwjrtgn01@gxuweg3tst04 varnish-3.0.5]$ make
+这样我们可以在make结束的时候通过一条命令来检查是否成功编译：echo  $?
+输入这条命令回车后，输出的结果是0，那么就说明成功编译，否则就是出错了，echo  $?表示检查上一条命令的退出状态，程序正常退出返回0！
+yum -y install readline readline-devel
+
+[patgn01@web01 ~]$ make install
+
+varnish 常见报错
+http://www.iyunv.com/thread-40133-1-1.html
+
+库文件不存在:
+/uniiof/users/tgnusr01/varnish/sbin/varnishd: error while loading shared libraries: libvarnish.so: cannot open shared object file: No such file or directory
+/usr/local/nginx/sbin/nginx: error while loading shared libraries: libpcre.so.1: cannot open shared object file: No such file or directory  
+find / -type f -name *libpcre.so.*
+root:cd /etc/ld.so.conf.d
+[root@gxuweg3web11 ld.so.conf.d]# vi usr_local_lib.conf  添加一个文件 (如果没有)
+
+/uniiof/users/tgnusr01/LuaJIT/lib
+/uniiof/users/tgnusr01/varnish/lib/varnish 
+[root@gxuweg3web11 ld.so.conf.d]# /sbin/ldconfig -v    root执行~

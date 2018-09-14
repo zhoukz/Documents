@@ -1,0 +1,182 @@
+#新建dubbo用户
+
+useradd -u 577 -g 502 -d /uniapp/users/tsthtdoub01 -m tsthtdoub01 
+
+passwd tsthtdoub01 --stdin <<< NEuSkxy17l
+
+#从C:\Users\huang\OneDrive\AI\pkg-conf\zookeeper.tar上传zookeeper.tar并解压，修改配置文件
+
+tar xvf zookeeper.tar
+
+vi zkEnv.sh
+
+## The following by lw 20131209. 
+
+export JAVA_HOME=/opt/freeware/jdk1.7.0_51 
+
+export PATH=.:$JAVA_HOME/bin:$PATH 
+
+export ZOOBINDIR=/opt/freeware/zookeeper-3.4.6 
+
+export ZOOKEEPER_PREFIX=/opt/freeware/zookeeper-3.4.6 
+
+export ZOOCFGDIR=/uniapp/users/tsthtdoub01/zookeeper/conf 
+
+export ZOO_LOG_DIR=/uniapp/users/tsthtdoub01/zookeeper/logs 
+
+export CLASSPATH=/opt/freeware/zookeeper-3.4.6/lib:$CLASSPATH
+
+vi zoo.cfg
+
+dataDir=/uniapp/users/tsthtdoub01/zookeeper/zk-data
+
+clientPort=29181
+
+#启动
+
+./zkServer.sh start
+
+jps
+
+#验证
+
+./zkCli.sh -server 133.0.191.10:29181
+
+
+
+Zookeeper集群安装
+
+环境:
+10.202.41.100  安装2个实例
+10.202.41.101   安装1个实例
+
+1,先在100上安装:
+同样解压在/opt/freeware里
+[root@WOPAY-DEVTEST-01 freeware]# tar zxvf zookeeper-3.4.5.tar.gz
+切换安装用户:
+2,[wohuafu@WOPAY-DEVTEST-01 ~]$mkdir -p zookeeper1/bin zookeeper1/logs zookeeper1/conf zookeeper1/zk-data
+
+3,拷贝解压目录下的文件到新建的目录里:
+cp /opt/freeware/zookeeper-3.4.5/bin/* ~/zookeeper1/bin
+cp /opt/freeware/zookeeper-3.4.5/conf/* ~/zookeeper1/conf
+cp /opt/freeware/zookeeper-3.4.5/conf/zoo_sample.cfg ~/zookeeper1/conf/zoo.cfg
+
+4,修改环境变量
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd zookeeper1/bin/
+[wohuafu@WOPAY-DEVTEST-01 bin]$ vi zkEnv.sh
+################################################################
+## The following by lw 20131209.
+#export JAVA_HOME=/opt/freeware/jdk1.7.0_51
+#export PATH=.:$JAVA_HOME/bin:$PATH
+export ZOOBINDIR=/opt/freeware/zookeeper-3.4.5/bin
+export ZOOKEEPER_PREFIX=/opt/freeware/zookeeper-3.4.5
+export ZOOCFGDIR=/home/wohuafu/zookeeper1/conf
+export ZOO_LOG_DIR=/home/wohuafu/zookeeper1/conf/logs
+export CLASSPATH=/opt/freeware/zookeeper-3.4.5/lib:$CLASSPATH
+
+5,修改配置文件:
+[wohuafu@WOPAY-DEVTEST-01 conf]$ pwd
+/home/wohuafu/zookeeper1/conf
+[wohuafu@WOPAY-DEVTEST-01 conf]$ vi zoo.cfg  主要修改以下参数:
+dataDir=/home/wohuafu/zookeeper1/zk-data
+clientPort=29181
+server.1=WOPAY-DEVTEST-01:29888:39888
+server.2=WOPAY-DEVTEST-01:29888:39888
+server.3=WOPAY-DEVTEST-02:29888:39888
+
+
+
+
+6修改myid  对应server后面的数字  上面第一台对应1 所以myid 为1,同理其他两个实例改为2,3
+[wohuafu@WOPAY-DEVTEST-01 zk-data]$ vi myid (修改为1)
+1
+7,启动:
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd zookeeper1/bin
+[wohuafu@WOPAY-DEVTEST-01 bin]$ ./zkServer.sh start
+[wohuafu@WOPAY-DEVTEST-01 bin]$ jps 可以查看到quornumpeermain 进程
+12635 QuorumPeerMain
+[wohuafu@WOPAY-DEVTEST-01 bin]$ ./zkServer.sh status 查看状态
+JMX enabled by default
+Using config: /home/wohuafu/zookeeper1/conf/zoo.cfg
+Mode: follower
+
+[wohuafu@WOPAY-DEVTEST-01 bin]$ ps -ef |grep zookeeper 也可以查看到相应的进程
+
+
+到些安装成功;
+
+
+遇到的问题处理
+Exception in thread "main" java.lang.NoClassDefFoundError: org/apache/zookeeper/server/quorum/QuorumPeerMain
+Caused by: java.lang.ClassNotFoundException: org.apache.zookeeper.server.quorum.QuorumPeerMain
+        at java.net.URLClassLoader$1.run(URLClassLoader.java:202)
+        at java.security.AccessController.doPrivileged(Native Method)
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:190)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:306)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:301)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:247)
+Could not find the main class: org.apache.zookeeper.server.quorum.QuorumPeerMain.  Program will exit.
+
+修改：脚本 zkEnv.sh 如下2处地方解决。
+#for i in "$ZOOBINDIR"/../zookeeper-*.jar，修改为如下：
+for i in "$ZOOBINDIR"/zookeeper-*.jar
+
+#LIBPATH="${ZOOBINDIR}"/../lib/*.jar，修改为如下：
+LIBPATH="${ZOOBINDIR}"/lib/*.jar
+
+
+
+
+
+
+100上安装另一个实例:
+安装在另一个用户上: zkpusr01/sXlG1OeRL1T0
+在刚才装的用户下打个包传到zkpusr01家目录下 改一个权限 解压
+[wohuafu@WOPAY-DEVTEST-01 ~]$ tar cvf zookeeper1.tar zookeeper1
+[zkpusr01@WOPAY-DEVTEST-01 bin]$ vi zkEnv.sh
+################################################################
+## The following by lw 20131209.
+#export JAVA_HOME=/opt/freeware/jdk1.7.0_51
+#export PATH=.:$JAVA_HOME/bin:$PATH
+export ZOOBINDIR=/opt/freeware/zookeeper-3.4.5
+export ZOOKEEPER_PREFIX=/opt/freeware/zookeeper-3.4.5
+export ZOOCFGDIR=/home/zkpusr01/zookeeper2/conf
+export ZOO_LOG_DIR=/home/zkpusr01/zookeeper2/logs
+export CLASSPATH=/opt/freeware/zookeeper-3.4.5/lib:$CLASSPATH
+
+
+[zkpusr01@WOPAY-DEVTEST-01 conf]$ vi zoo.cfg
+dataDir=/home/zkpusr01/zookeeper2/zk-data
+clientPort=29182 (同一台主机 注意用不同的端口号)
+server.1=WOPAY-DEVTEST-01:29888:39888
+server.2=WOPAY-DEVTEST-01:29888:39888
+server.3=WOPAY-DEVTEST-02:29888:39888
+
+[zkpusr01@WOPAY-DEVTEST-01 zk-data]$ vi myid (实例2)
+2
+~
+[zkpusr01@WOPAY-DEVTEST-01 bin]$ ./zkServer.sh  start 启动
+[zkpusr01@WOPAY-DEVTEST-01 bin]$ ./zkServer.sh  status
+[zkpusr01@WOPAY-DEVTEST-01 bin]$ jps 查看进程
+26338 Jps
+12175 QuorumPeerMain
+
+10.202.41.101   安装1个实例 安装方法同上
+测试集群成功与否?
+随便在一台主机上登录zk
+[wohuafu@WOPAY-DEVTEST-02 bin]$ ./zkCli.sh -server 10.202.41.101:29181
+[zk: 10.202.41.101:29181(CONNECTED) 2] create /test null
+Created /test
+[zk: 10.202.41.101:29181(CONNECTED) 3] ls /
+[test, zookeeper]
+
+在其他主机检查都存在
+
+[zk: 10.202.41.100:29181(CONNECTED) 1] ls /
+[test, zookeeper]
+
+[zk: 10.202.41.100:29182(CONNECTED) 5] ls /
+[test, zookeeper]
+
+
+到些ZK集群安装成功!

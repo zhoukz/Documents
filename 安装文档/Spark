@@ -1,0 +1,16 @@
+安装文档
+http://spark.apache.org/downloads.html
+
+1. 找一台做master的机器，master没有计算压力。 下载1.5.1 hadoop编译版本 解压出spark-1.5.1-bin-hadoop2.4
+
+2. conf/spark-env.sh   修改添加一行，指定本地hadoop的配置目录，
+   export HADOOP_CONF_DIR=/xxxxxxxx/hadoop/etc
+
+3. 启动spark-master
+   ./sbin/start-master.sh -h 本机IP
+
+4. 分发   spark-1.5.1-bin-hadoop2.4 到所有计算节点；
+   分别启动 worker
+   sbin/start-slave.sh spark://132.37.6.111:7077 -m 32g
+
+5. 登录http://132.37.6.111:8080 看是否启动好； 运行例子检验

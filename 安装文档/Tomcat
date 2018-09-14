@@ -1,0 +1,26 @@
+#新建用户
+groupadd -g 502 tstht
+useradd -u 575 -g 502 -d /uniapp/users/tstht01 -m tstht01
+passwd tstht01 --stdin <<< XISkxy86o 
+
+#环境变量
+vi .bash_profile
+export JAVA_HOME=/opt/freeware/jdk1.7.0_51 
+export PATH=$JAVA_HOME/bin:$PATH 
+export CATALINA_HOME=/opt/freeware/apache-tomcat-7.0.52 
+export LANG=zh_CN.utf8 
+export LC_CTYPE="zh_CN.utf8" 
+
+#部署包存放路径
+/uniapp/dbmaint/instsw  
+
+#查找端口
+netstat -an|grep 14311
+
+#执行一键部署命令
+/usr/local/bin/tomcat-config
+
+案例
+CUIOF_RPTWEGOBH1TD1
+WEGOBH1TD1-RPTS1
+14311 

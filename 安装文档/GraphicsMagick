@@ -1,0 +1,3 @@
+1、新建一个tomcat
+2、从C:\Users\huang\OneDrive\AI\pkg-conf\GraphicsMagick.tar上传压缩包并解压
+3、创建gm的别名，并引用到GraphicsMagick/bin/gm 

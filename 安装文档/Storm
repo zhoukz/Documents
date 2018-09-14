@@ -1,0 +1,19 @@
+新建storm用户
+将storm-0.9.5.tar.gz解压到用户目录
+
+修改storm-0.9.5/conf/storm.yaml文件：
+storm.local.dir: #本地目录
+storm.zookeeper.servers: #zookeeper主机名
+storm.zookeeper.port: #zookeeper端口
+storm.zookeeper.root: #存储在zookeeper的目录
+nimbus.host: #主节点IP
+nimbus.thrift.port: #主节点端口
+ui.port: #图形界面端口
+supervisor.slots.ports: #支持的端口
+
+storm启动
+./bin/storm nimbus & 启动主节点
+./bin/storm ui & 启动界面
+./bin/storm supervisor & 启动其他节点
+
+登录ui界面查看是否安装成功。 

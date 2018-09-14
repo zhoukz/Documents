@@ -1,0 +1,88 @@
+Kafka集群
+
+环境:
+10.202.41.100  安装1个实例
+10.202.41.101   安装1个实例
+利用zookeeper 配置集群
+1,解压到当前用户目录下:
+[wohuafu@WOPAY-DEVTEST-01 ~]$ tar xvf kafka_2.9.2-0.8.1.tar
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd kafka_2.9.2-0.8.1/config/
+2,修改配置文件:
+[wohuafu@WOPAY-DEVTEST-01 config]$ vi consumer.properties 配置zk集群
+zookeeper.connect=WOPAY-DEVTEST-01:29181,WOPAY-DEVTEST-01:29182,WOPAY-DEVTEST-02:29181
+[wohuafu@WOPAY-DEVTEST-01 config]$ vi producer.properties
+metadata.broker.list=WOPAY-DEVTEST-01:19092,WOPAY-DEVTEST-02:19092
+#(几个节点写几个)
+[wohuafu@WOPAY-DEVTEST-01 config]$ vi server.properties
+broker.id=1
+#(两台主机从1开始,另一台就是2)
+port=19092
+#(修改端口号)
+host.name=10.202.41.100
+#(修改主机)
+log.dirs=/home/wohuafu/kafka_2.9.2-0.8.1/data
+#log数据目录data 没有要自己新建
+#zookeeper.connect=localhost:2181(修改zk集群)
+zookeeper.connect=WOPAY-DEVTEST-01:29181,WOPAY-DEVTEST-01:29182,WOPAY-DEVTEST-02:29181
+
+[wohuafu@WOPAY-DEVTEST-01 config]$ vi zookeeper.properties
+dataDir=/home/wohuafu/kafka_2.9.2-0.8.1/zookeeper
+#(zookeeper没有新建)
+clientPort=29181
+#zk端口号
+
+[wohuafu@WOPAY-DEVTEST-01 kafka_2.9.2-0.8.1]$ mdir bin1 新建启动脚本
+[wohuafu@WOPAY-DEVTEST-01 kafka_2.9.2-0.8.1]$ cd bin1
+[wohuafu@WOPAY-DEVTEST-01 bin1]$ vi start.sh
+nohup /home/wohuafu/kafka_2.9.2-0.8.1/bin/kafka-server-start.sh  /home/wohuafu/kafka_2.9.2-0.8.1/config/server.properties  > /home/wohuafu/kafka_2.9.2-0.8.1/logs/kafka.log 2>&1 &
+
+[wohuafu@WOPAY-DEVTEST-01 bin1]$ chmod 755 start.sh
+
+
+3,启动:
+[wohuafu@WOPAY-DEVTEST-01 bin1]$ ./start.sh
+[wohuafu@WOPAY-DEVTEST-01 bin1]$ jps 可以看到kafka 进程
+19084 Kafka
+
+
+单实例安装成功
+
+10.202.41.101   另一个主机安装同上
+
+测试:
+创建一个topics 队列
+在101上
+[wohuafu@WOPAY-DEVTEST-02 bin]$ ./kafka-topics.sh --create  --topic test_topic --partitions 2 --replication-factor 2  --zookeeper 10.202.41.101:29181
+Created topic "test_topic".
+
+（#删除topic命令
+./kafka-run-class.sh kafka.admin.DeleteTopicCommand --topic test_topic --zookeeper gxuweg3dpp05:29181
+删除后需重启kafka）
+
+[wohuafu@WOPAY-DEVTEST-02 kafka_2.9.2-0.8.1]$ cd data/                       会生成test_topic 队列
+[wohuafu@WOPAY-DEVTEST-02 data]$ ll
+total 16
+-rw-rw-r--. 1 wohuafu wohuafu   34 Apr 27 17:19 recovery-point-offset-checkpoint
+-rw-rw-r--. 1 wohuafu wohuafu   34 Apr 27 17:20 replication-offset-checkpoint
+drwxrwxr-x. 2 wohuafu wohuafu 4096 Apr 27 17:19 test_topic-0
+drwxrwxr-x. 2 wohuafu wohuafu 4096 Apr 27 17:19 test_topic-1
+
+在100上
+如果成功在另一个节点也有数据:
+[wohuafu@WOPAY-DEVTEST-01 ~]$ cd kafka_2.9.2-0.8.1
+[wohuafu@WOPAY-DEVTEST-01 kafka_2.9.2-0.8.1]$ cd data/
+[wohuafu@WOPAY-DEVTEST-01 data]$ ll
+total 16
+-rw-rw-r--. 1 wohuafu wohuafu   34 Apr 27 17:20 recovery-point-offset-checkpoint
+-rw-rw-r--. 1 wohuafu wohuafu   34 Apr 27 17:21 replication-offset-checkpoint
+drwxrwxr-x. 2 wohuafu wohuafu 4096 Apr 27 17:20 test_topic-0
+drwxrwxr-x. 2 wohuafu wohuafu 4096 Apr 27 17:20 test_topic-1
+
+
+ZK也能查到
+[wohuafu@WOPAY-DEVTEST-01 bin]$ ./zkCli.sh -server 10.202.41.100:29181
+[zk: 10.202.41.100:29181(CONNECTED) 4] ls /brokers/ids
+[2, 1]
+
+
+到些KAFKA 安装完成!

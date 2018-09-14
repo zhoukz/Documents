@@ -1,0 +1,90 @@
+https://about.gitlab.com/downloads/#centos6
+
+1，
+sudo yum install curl openssh-server postfix cronie
+sudo service postfix start
+sudo chkconfig postfix on
+sudo lokkit -s http -s ssh
+
+2
+curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
+sudo yum install gitlab-ce
+3. Configure and start GitLab
+sudo gitlab-ctl reconfigure
+4. Browse to the hostname and login
+
+Username: root
+Password: 5iveL!fe
+
+
+Running handlers:
+[2014-11-25T11:10:44+08:00] ERROR: Running exception handlers
+Running handlers complete
+[2014-11-25T11:10:44+08:00] ERROR: Exception handlers complete
+[2014-11-25T11:10:44+08:00] FATAL: Stacktrace dumped to /opt/gitlab/embedded/cookbooks/cache/chef-stacktrace.out
+Chef Client failed. 0 resources updated in 7.716937465 seconds
+[2014-11-25T11:10:44+08:00] ERROR: External URL must include a FQDN
+[2014-11-25T11:10:45+08:00] FATAL: Chef::Exceptions::ChildConvergeError: Chef run process exited unsuccessfully (exit code 1)
+
+解决方法：
+是因为/etc/gitlab/gitlab.rb文件中的内容是：
+external_url 'hostname'
+将其修改为：
+external_url='hostname'
+即可，只需要在原来的配置项中添加个 ‘=’ 即可，为了避免域名引起的问题，也可以直接配置ip，如下所示：
+external_url='192.168.1.49'。
+http://blog.mimvp.com/2014/10/gitlab-build-your-own-private-github/
+
+
+问题3: 为了避免nginx 80端口与其它服务（httpd，tomcat）冲突，修改80端口为8080
+解决：
+vim /var/opt/gitlab/nginx/conf/gitlab-http.conf
+修改：
+ server {
+  listen *:80;
+  server_name ithomer;
+为：
+server {
+  listen *:8080;
+  server_name 118.29.237.28;
+重启 gitlab 内嵌的 nginx
+/opt/gitlab/embedded/sbin/nginx -p /var/opt/gitlab/nginx
+注： 系统单独安装的nginx启动方法
+service nginx restart
+service nginx start
+service nginx stop
+###########################################
+[root@gxuweg3tst10 logs]# ps -ef |grep nginx |grep master
+root     200569 200567  0 Jul27 ?        00:00:00 nginx: master process /opt/gitlab/embedded/sbin/nginx -p /var/opt/gitlab/nginx
+[root@gxuweg3tst10 logs]# more nginx.pid
+200569
+重启
+[root@gxuweg3tst10 sbin]# /opt/gitlab/embedded/sbin/nginx -s reload
+
+########################################################
+[root@gxuweg3tst10 .ssh]# vim /var/opt/gitlab/nginx/conf/gitlab-http.conf
+[root@gxuweg3tst10 .ssh]# vi /var/opt/gitlab/gitlab-shell/config.yml
+[root@gxuweg3tst10 .ssh]# vi /var/opt/gitlab/gitlab-rails/etc/gitlab.yml
+[root@gxuweg3tst10 .ssh]# vi /etc/gitlab/gitlab.rb
+   #停止服务，防止有人提交
+[root@gxuweg3tst10 sbin]#  gitlab-ctl stop
+ok: down: logrotate: 1s, normally up
+ok: down: nginx: 0s, normally up
+ok: down: postgresql: 1s, normally up
+ok: down: redis: 0s, normally up
+ok: down: sidekiq: 1s, normally up
+ok: down: unicorn: 1s, normally up
+
+#重载配置
+  gitlab-ctl reconfigure
+  #确认一下是否有数据存在
+  sudo ls /mnt/nas/git-data/
+  #启动
+  sudo gitlab-ctl start
+
+####################################################################
+[infra@gxuweg3tst2 git-2.5.0]$ make configure
+[infra@gxuweg3tst2 git-2.5.0]$ ./configure
+[infra@gxuweg3tst2 git-2.5.0]$ make
+[infra@gxuweg3tst2 git-2.5.0]$  make install
+###############################################################################

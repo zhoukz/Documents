@@ -1,0 +1,46 @@
+1. 找一个目录，比如 用户根 。git下整个woego_spark
+
+2. 根据需要修改env.sh  中的环境变量
+
+==JAVA路径
+JAVA_HOME="/opt/freeware/jdk1.7.0_51"
+CLASSPATH=${CLASSPATH}:$JAVA_HOME/lib/tools.jar
+
+==数据的HBASE表
+HBASE_ACCESSDETAIL='woego:access_detail'
+HBASE_MAIN_ORD='T_ORD_MAIN_INFO'
+HBASE_SUB_ORD='T_ORD_INFO'
+
+==HBASE所需ZK地址
+ZK_HOST="132.37.5.197"
+ZK_PORT="29184"
+
+==spark master
+SPART_MASTER="spark://132.37.5.196:7077"
+
+==spark home
+SPARK_HOME=/uniiof/users/devdpp03/spark-1.5.1-bin-hadoop2.4
+
+==hdfs上的统计目录
+DATA_ROOT=/tongji_woego
+
+==mysql信息
+MYSQL_HOST="132.37.5.197"
+MYSQL_PORT=39306
+MYSQL_USER=stat
+MYSQL_PASS=stat123
+
+
+3. 执行一句 sh env.sh 1 1 1   用来创建各种对应目录
+
+4. 拷贝测试环境对应woego_spark/daily_ss/*   到本处
+
+5. 执行 sh stat_run.sh
+
+6. 创建定时任务
+crontab
+注意路径
+
+6,16,26,36,46,56 8-22 * * * cd /uniiof/users/hdpusr01/woego_spark; sh stat_run.sh > log2.log 2>&1
+1,11,21,31,41,51 * * * * cd /uniiof/users/hdpusr01/woego_spark; sh stat_run.sh > log3.log 2>&1
+8 0 * * * cd /uniiof/users/hdpusr01/woego_spark; sh daily_job.sh  > log4.log 2>&1
